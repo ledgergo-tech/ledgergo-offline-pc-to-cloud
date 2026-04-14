@@ -9,6 +9,7 @@
     "start": "electron .",
     "build": "electron-builder --win nsis",
     "dist": "electron-builder --win nsis",
+    "vercel-build": "echo 'Skipping electron build on Vercel'",
     "prebuild": "node scripts/bump-version.js",
     "predist": "node scripts/bump-version.js"
   },
