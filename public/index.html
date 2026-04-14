@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LEDGERGO - Smart Accounting Solutions</title>
+  <meta name="description" content="Offline billing software for small businesses. Manage sales, purchases, customers, inventory and reports without internet." />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
+  <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2" />
+  <link rel="apple-touch-icon" href="/favicon.png?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Header -->
+    <header class="top-header">
+      <!-- Top Row: Utilities -->
+      <div class="top-row">
+        <div class="brand-logo-wrap">
+          <div style="background: none; padding: 0;">
+            <!-- Signature Progressive Bar Logo -->
+            <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="48" fill="#10b981"/>
+              <!-- Progressive bars seen in the user's image -->
+              <rect x="25" y="55" width="8" height="15" rx="4" fill="white"/>
+              <rect x="38" y="45" width="8" height="25" rx="4" fill="white"/>
+              <rect x="51" y="35" width="8" height="35" rx="4" fill="white"/>
+              <rect x="64" y="25" width="8" height="45" rx="4" fill="white"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-name" style="font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+              <span style="color: var(--primary);">LEDGER</span><span style="color: #10b981;">GO</span>
+            </div>
+            <div class="brand-sub" style="font-size: 9px; opacity: 0.8; letter-spacing: 0.2px;">Smart Accounting Solutions</div>
+          </div>
+        </div>
+
+        <div class="topbar-search">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input id="global-search-input" type="text" placeholder="Search customer, invoice no, item name or code..." oninput="handleGlobalSearchInput(this.value)" onfocus="handleGlobalSearchInput(this.value)" onkeydown="handleGlobalSearchKeydown(event)" autocomplete="off" />
+          </div>
+          <div class="global-search-results" id="global-search-results"></div>
+          <div class="dropdown" id="create-dropdown">
+            <button class="btn btn-accent btn-sm create-btn" onclick="toggleCreateMenu()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create New
+            </button>
+            <div class="dropdown-menu" id="create-menu">
+              <div class="dropdown-section">SALES</div>
+              <a href="#" onclick="navigateTo('sales'); toggleCreateMenu()">🧾 Sales Invoice</a>
+              <a href="#" onclick="showAddPayment('IN'); toggleCreateMenu()">💰 Payment-In</a>
+              <a href="#" onclick="navigateTo('estimate'); toggleCreateMenu()">📄 Quotation (Estimate)</a>
+              <div class="dropdown-section">PURCHASE</div>
+              <a href="#" onclick="navigateTo('purchase'); toggleCreateMenu()">🛒 Purchase Invoice</a>
+              <a href="#" onclick="showAddPayment('OUT'); toggleCreateMenu()">💸 Payment-Out</a>
+              <div class="dropdown-section">INVENTORY</div>
+              <a href="#" onclick="showAddProduct(); toggleCreateMenu()">📦 Add Item</a>
+              <a href="#" onclick="showAddParty(); toggleCreateMenu()">👤 Add Party</a>
+            </div>
+          </div>
+        </div>
+
+           <div class="topbar-actions">
+            <div class="topbar-business-panel">
+              <div class="topbar-business-name" id="topbar-business-name">LEDGERGO</div>
+              <div class="topbar-business-meta">
+                <span id="topbar-date">Loading date...</span>
+              </div>
+            </div>
+           <div id="topbar-title" style="display:none;"></div>
+           <div class="user-avatar" style="background: var(--accent);">S</div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Navigation -->
+      <nav class="top-nav">
+        <div class="nav-item">
+          <button class="nav-link menu-btn active" data-page="dashboard" id="nav-dashboard">Dashboard</button>
+        </div>
+        <div class="nav-item">
+          <button class="nav-link menu-btn" data-page="customers" id="nav-customers">Parties</button>
+        </div>
+        
+        <div class="nav-item dropdown-hover">
+          <button class="nav-link">Sales</button>
+          <div class="nav-dropdown-menu">
+            <button class="menu-btn" data-page="sales">Sale Invoices</button>
+            <button class="menu-btn" data-page="estimate">Quotation / Estimate</button>
+            <button class="menu-btn" data-page="payment-in">Payment In</button>
+            <button class="menu-btn" data-page="sale-return">Sales Return</button>
+            <button class="menu-btn" data-page="challan">Delivery Challan</button>
+            <button class="menu-btn" data-page="proforma">Proforma Invoice</button>
+          </div>
+        </div>
+
+        <div class="nav-item dropdown-hover">
+          <button class="nav-link">Purchases</button>
+          <div class="nav-dropdown-menu">
+            <button class="menu-btn" data-page="purchase">Purchase Invoice</button>
+            <button class="menu-btn" data-page="payment-out">Payment Out</button>
+            <button class="menu-btn" data-page="purchase-return">Purchase Return</button>
+            <button class="menu-btn" data-page="purchase-order">Purchase Orders</button>
+          </div>
+        </div>
+
+        <div class="nav-item dropdown-hover">
+          <button class="nav-link">Items</button>
+          <div class="nav-dropdown-menu">
+            <button class="menu-btn" data-page="products">Inventory</button>
+            <button class="menu-btn" data-page="inventory-batch">Godown (Batch)</button>
+          </div>
+        </div>
+
+        <div class="nav-item dropdown-hover">
+          <button class="nav-link">Accounting</button>
+          <div class="nav-dropdown-menu">
+            <button class="menu-btn" data-page="bank">Cash & Bank</button>
+            <button class="menu-btn" data-page="expenses">Expenses</button>
+            <button class="menu-btn" data-page="e-invoicing">E-Invoicing</button>
+          </div>
+        </div>
+
+        <div class="nav-item">
+          <button class="nav-link menu-btn" data-page="reports" id="nav-reports">Reports</button>
+        </div>
+
+        <!-- POS functionality removed per user request -->
+
+
+        <div class="nav-item dropdown-hover" style="margin-left: auto;">
+          <button class="nav-link">Settings</button>
+          <div class="nav-dropdown-menu right-align">
+            <button class="menu-btn" data-page="users" id="nav-users">Manage Users</button>
+            <button class="menu-btn" data-page="settings" id="nav-settings">Business Settings</button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Content -->
+      <div class="content" id="main-content">
+        <section id="page-dashboard" class="page active"></section>
+        <section id="page-sales" class="page"></section>
+        <section id="page-proforma" class="page"></section>
+        <section id="page-estimate" class="page"></section>
+        <section id="page-payment-in" class="page"></section>
+        <section id="page-sale-order" class="page"></section>
+        <section id="page-challan" class="page"></section>
+        <section id="page-sale-return" class="page"></section>
+        <section id="page-invoices" class="page"></section>
+        <section id="page-purchase" class="page"></section>
+        <section id="page-payment-out" class="page"></section>
+        <section id="page-purchase-order" class="page"></section>
+        <section id="page-purchase-return" class="page"></section>
+        <section id="page-expenses" class="page"></section>
+        <section id="page-customers" class="page"></section>
+        <section id="page-products" class="page"></section>
+        <section id="page-inventory-batch" class="page"></section>
+        <section id="page-bank" class="page"></section>
+        <section id="page-reports" class="page"></section>
+        <section id="page-daybook" class="page"></section>
+        <section id="page-profit" class="page"></section>
+        <section id="page-e-invoicing" class="page"></section>
+        <section id="page-settings" class="page"></section>
+        <section id="page-users" class="page"></section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Simple Legacy Modal (for small previews) -->
+  <div class="modal-overlay" id="legacy-modal" style="display:none;">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <div class="modal-title" id="legacy-modal-title">Notification</div>
+        <button class="modal-close" onclick="document.getElementById('legacy-modal').style.display='none'">✕</button>
+      </div>
+      <div class="modal-body" id="legacy-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay" id="confirm-modal" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Confirm Delete</div>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message">Are you sure you want to delete this record? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="confirm-yes-btn">Confirm Delete</button>
+        <button class="btn btn-outline" onclick="closeConfirmModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shortcuts Modal -->
+  <div class="modal-overlay" id="shortcuts-modal" style="display:none;" onclick="closeShortcutsModal(event)">
+    <div class="modal-box shortcut-menu-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">Keyboard Shortcuts</div>
+        <div class="modal-subtitle">Press Alt + Key to navigate instantly</div>
+      </div>
+      <div class="modal-body shortcuts-grid">
+        <div class="shortcut-column">
+          <h3 class="shortcut-category sale">SALE</h3>
+          <div class="shortcut-item"><span>Sale Invoice</span><kbd>Alt + S</kbd></div>
+          <div class="shortcut-item"><span>Payment-In</span><kbd>Alt + I</kbd></div>
+          <div class="shortcut-item"><span>Sale Return</span><kbd>Alt + R</kbd></div>
+          <div class="shortcut-item"><span>Sale Order</span><kbd>Alt + F</kbd></div>
+          <div class="shortcut-item"><span>Estimate/Quotation</span><kbd>Alt + M</kbd></div>
+          <div class="shortcut-item"><span>Proforma Invoice</span><kbd>Alt + K</kbd></div>
+          <div class="shortcut-item"><span>Delivery Challan</span><kbd>Alt + D</kbd></div>
+        </div>
+        <div class="shortcut-column">
+          <h3 class="shortcut-category purchase">PURCHASE</h3>
+          <div class="shortcut-item"><span>Purchase Invoice</span><kbd>Alt + P</kbd></div>
+          <div class="shortcut-item"><span>Payment-Out</span><kbd>Alt + O</kbd></div>
+          <div class="shortcut-item"><span>Purchase Return</span><kbd>Alt + L</kbd></div>
+          <div class="shortcut-item"><span>Purchase Order</span><kbd>Alt + G</kbd></div>
+        </div>
+        <div class="shortcut-column">
+          <h3 class="shortcut-category others">OTHERS</h3>
+          <div class="shortcut-item"><span>Expenses</span><kbd>Alt + E</kbd></div>
+          <div class="shortcut-item"><span>Parties List</span><kbd>Alt + J</kbd></div>
+          <div class="shortcut-item"><span>Products/Stock</span><kbd>Alt + T</kbd></div>
+          <div class="shortcut-item"><span>Dashboard</span><kbd>Alt + H</kbd></div>
+        </div>
+      </div>
+      <div class="modal-footer shortcuts-footer">
+        <div class="shortcut-hint">Shortcut to open this menu: <kbd>Ctrl + Enter</kbd></div>
+        <button class="btn btn-outline" onclick="closeShortcutsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Premium Universal Modal (V3) -->
+  <div class="modal-overlay" id="premium-modal" style="display:none;">
+    <div class="modal-box premium-modal-box modal-lg">
+      <div class="modal-header">
+        <div class="modal-title" id="pm-title">Modal Title</div>
+        <button class="modal-close" onclick="closePm()">✕</button>
+      </div>
+      <div class="modal-body-container" id="pm-body-container">
+        <!-- Optional Sidebar for multi-tab modals -->
+        <aside class="modal-sidebar" id="pm-sidebar" style="display:none;"></aside>
+        
+        <div class="modal-content-area">
+          <form id="pm-form">
+            <div id="pm-content-main" class="tab-content active"></div>
+            <!-- Dynamic tab contents will be injected here -->
+          </form>
+          <!-- Non-form dynamic content -->
+          <div id="pm-content-raw" style="display:none;"></div>
+        </div>
+      </div>
+      <div class="modal-footer" id="pm-footer">
+        <button type="button" class="btn btn-outline" onclick="closePm()">Cancel</button>
+        <div class="flex gap-12" id="pm-footer-actions">
+          <button type="button" class="btn btn-primary" id="pm-save-btn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Glassmorphic Status Bar -->
+  <div class="glass-status-bar">
+    <div class="stat-item"><span class="pulse">🟢</span> Offline Mode</div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">v1.0.22 LIVE</div>
+  </div>
+
+  <script src="/app_v22.js"></script>
+</body>
+</html>
+
+

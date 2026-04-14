@@ -1,9 +1,5 @@
 {
   "version": 2,
-  "public": true,
-  "name": "ledgergo-offline-pc-to-cloud",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/handler.js" },
-    { "source": "/(.*)", "destination": "/Ledgergo Offline PC/public/$1" }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
