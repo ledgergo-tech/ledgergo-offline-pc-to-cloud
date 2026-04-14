@@ -12,3 +12,5 @@ tmp-*.js
 {
 package.json{
 Ledgergo Offline PC/data/*.json
+
+.vercel
