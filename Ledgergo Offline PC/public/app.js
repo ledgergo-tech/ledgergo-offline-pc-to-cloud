@@ -1,8 +1,8 @@
 console.log("LEDGERGO APP LOADED - v1.0.22");
 
 // Supabase Configuration
-const SUPABASE_URL = "https://baxobcoqkkqipmimqvse.supabase.co";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"; // Please provide your Anon Key
+const SUPABASE_URL = "https://qthoyhhkocpipdaxknyc.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0aG95aGhrb2NwaXBkYXhrbnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MzU3NjIsImV4cCI6MjA4NzQxMTc2Mn0.ydexX--Rm0eIDw80NOiQgNFjNsRVOmTWUEpQZyLHnAo";
 let supabase = null;
 
 if (typeof supabasejs !== 'undefined' && SUPABASE_KEY !== "YOUR_SUPABASE_ANON_KEY") {

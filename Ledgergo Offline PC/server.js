@@ -4,6 +4,41 @@ const os = require("os");
 const path = require("path");
 const url = require("url");
 
+// Supabase Integration
+let supabase = null;
+try {
+  const supabaseModule = require("../supabase");
+  supabase = supabaseModule.supabase;
+  console.log("Supabase Integration Initialized");
+} catch (e) {
+  console.log("Supabase not available, running in local-only mode");
+}
+
+async function syncToCloud(table, data) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.from(table).upsert(data);
+    if (error) console.error(`Sync error for ${table}:`, error.message);
+  } catch (e) {
+    console.error(`Sync exception for ${table}:`, e.message);
+  }
+}
+
+async function getCloudData(table, fallbackData) {
+  if (!supabase) return fallbackData;
+  try {
+    const { data, error } = await supabase.from(table).select("*");
+    if (error) {
+      console.error(`Fetch error for ${table}:`, error.message);
+      return fallbackData;
+    }
+    return data && data.length > 0 ? data : fallbackData;
+  } catch (e) {
+    console.error(`Fetch exception for ${table}:`, e.message);
+    return fallbackData;
+  }
+}
+
 const PORT = 3001;
 const PUBLIC_DIR = path.join(__dirname, "public");
 
@@ -144,6 +179,10 @@ function readJson(fileName, defaultValue = []) {
 function writeJson(fileName, data) {
   const fullPath = path.join(DATA_DIR, fileName);
   fs.writeFileSync(fullPath, JSON.stringify(data, null, 2), "utf8");
+  
+  // Async Sync to Cloud
+  const tableName = fileName.replace(".json", "");
+  syncToCloud(tableName, data).catch(() => {});
 }
 
 function sendJson(res, statusCode, data) {
@@ -482,7 +521,7 @@ function deriveImportedCustomerName(body) {
   return fallbackIdentity ? `Party ${fallbackIdentity}` : "";
 }
 
-function handleApi(req, res, pathname) {
+async function handleApi(req, res, pathname) {
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
@@ -494,7 +533,7 @@ function handleApi(req, res, pathname) {
 
   // ===================== SETTINGS =====================
   if (pathname === "/api/settings" && req.method === "GET") {
-    return sendJson(res, 200, readJson("settings.json", {
+    const local = readJson("settings.json", {
       business_name: "My Business",
       business_address: "",
       business_mobile: "",
@@ -503,7 +542,8 @@ function handleApi(req, res, pathname) {
       currency: "₹",
       invoice_prefix: "INV-",
       tax_enabled: true
-    }));
+    });
+    return sendJson(res, 200, await getCloudData("settings", local));
   }
 
   if (pathname === "/api/settings/save" && req.method === "POST") {
@@ -586,7 +626,8 @@ function handleApi(req, res, pathname) {
 
   // ===================== CUSTOMERS =====================
   if (pathname === "/api/customers" && req.method === "GET") {
-    return sendJson(res, 200, readJson("customers.json"));
+    const local = readJson("customers.json");
+    return sendJson(res, 200, await getCloudData("customers", local));
   }
 
   if (pathname === "/api/customers/create" && req.method === "POST") {
@@ -683,7 +724,8 @@ function handleApi(req, res, pathname) {
 
   // ===================== PRODUCTS =====================
   if (pathname === "/api/products" && req.method === "GET") {
-    return sendJson(res, 200, readJson("products.json"));
+    const local = readJson("products.json");
+    return sendJson(res, 200, await getCloudData("products", local));
   }
 
   if (pathname === "/api/products/create" && req.method === "POST") {
@@ -772,7 +814,8 @@ function handleApi(req, res, pathname) {
 
   // ===================== BANKS =====================
   if (pathname === "/api/bank" && req.method === "GET") {
-    return sendJson(res, 200, readJson("banks.json"));
+    const local = readJson("banks.json");
+    return sendJson(res, 200, await getCloudData("banks", local));
   }
 
   if (pathname === "/api/bank/create" && req.method === "POST") {
@@ -804,7 +847,8 @@ function handleApi(req, res, pathname) {
 
   // ===================== INVOICES / SALES =====================
   if (pathname === "/api/invoices" && req.method === "GET") {
-    return sendJson(res, 200, readJson("invoices.json"));
+    const local = readJson("invoices.json");
+    return sendJson(res, 200, await getCloudData("invoices", local));
   }
 
   if (pathname.startsWith("/api/invoices/pdf/") && req.method === "GET") {
@@ -1122,7 +1166,8 @@ if (pathname === "/api/invoices/delete" && req.method === "POST") {
   }
   // ===================== PURCHASES =====================
   if (pathname === "/api/purchases" && req.method === "GET") {
-    return sendJson(res, 200, readJson("purchases.json"));
+    const local = readJson("purchases.json");
+    return sendJson(res, 200, await getCloudData("purchases", local));
   }
 
   if (pathname === "/api/purchases/create" && req.method === "POST") {
@@ -1289,7 +1334,8 @@ if (pathname === "/api/purchases/delete" && req.method === "POST") {
   }
   // ===================== EXPENSES =====================
   if (pathname === "/api/expenses" && req.method === "GET") {
-    return sendJson(res, 200, readJson("expenses.json"));
+    const local = readJson("expenses.json");
+    return sendJson(res, 200, await getCloudData("expenses", local));
   }
 
   if (pathname === "/api/expenses/create" && req.method === "POST") {
