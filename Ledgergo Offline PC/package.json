@@ -1,6 +1,6 @@
 {
   "name": "ledgergo-offline-pc",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "private": true,
   "description": "Offline PC version of LEDGERGO with no npm dependencies",
   "main": "server.js",
