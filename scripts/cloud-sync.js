@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const { supabase } = require('./supabase');
+const { supabase } = require('../supabase');
 
 async function syncAll() {
-  const dataDir = path.join(__dirname, 'Ledgergo Offline PC', 'data');
+  const dataDir = path.join(__dirname, '..', 'Ledgergo Offline PC', 'data');
   const files = [
     'settings.json', 'customers.json', 'products.json', 'banks.json',
     'invoices.json', 'purchases.json', 'expenses.json'
