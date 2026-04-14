@@ -1,0 +1,8 @@
+node_modules/
+dist/
+data/*.json
+*.log
+test_app.js
+app_v22.js
+public/app_v22.js
+.env

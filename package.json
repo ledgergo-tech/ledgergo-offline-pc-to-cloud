@@ -1,0 +1,72 @@
+{
+  "name": "ledgergo",
+  "version": "1.0.19",
+  "productName": "LEDGERGO",
+  "description": "LEDGERGO offline billing desktop application for Windows.",
+  "author": "OpenAI Codex",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win nsis",
+    "dist": "electron-builder --win nsis",
+    "prebuild": "node scripts/bump-version.js",
+    "predist": "node scripts/bump-version.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.ledgergo.desktop",
+    "productName": "LEDGERGO",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "Ledgergo Offline PC/**/*",
+      "LEDGERGO Offline PC/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "icon": "electron/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LEDGERGO",
+      "installerIcon": "electron/assets/icon.ico",
+      "uninstallerIcon": "electron/assets/icon.ico",
+      "installerHeaderIcon": "electron/assets/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "electron/assets/icon.ico",
+        "to": "icon.ico"
+      },
+      {
+        "from": "electron/assets/icon.png",
+        "to": "icon.png"
+      }
+    ]
+  }
+}

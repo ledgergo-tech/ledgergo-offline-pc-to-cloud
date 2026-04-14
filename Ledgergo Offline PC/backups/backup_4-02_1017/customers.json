@@ -1,0 +1,34 @@
+[
+  {
+    "id": 2,
+    "name": "Test Party",
+    "type": "customer",
+    "mobile": "",
+    "email": "",
+    "address": "",
+    "gstin": "",
+    "pan": "",
+    "city": "",
+    "pincode": "",
+    "place_of_supply": "",
+    "credit_limit": null,
+    "balance": 500,
+    "createdAt": "2026-04-08T04:55:49.400Z"
+  },
+  {
+    "id": 1,
+    "name": "Dhanesh Electronics",
+    "type": "vendor",
+    "mobile": "",
+    "email": "",
+    "address": "Patna",
+    "gstin": "",
+    "pan": "",
+    "city": "Patna",
+    "pincode": "",
+    "place_of_supply": "",
+    "credit_limit": null,
+    "balance": -125302,
+    "createdAt": "2026-04-07T11:59:58.413Z"
+  }
+]

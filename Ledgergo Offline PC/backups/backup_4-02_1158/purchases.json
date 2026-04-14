@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "supplier_name": "Dhanesh Electronics",
+    "supplier_mobile": "",
+    "items": [
+      {
+        "product_id": "5",
+        "product_name": "A57 NEW COMBO PULOTO RM/OPPO",
+        "quantity": 5,
+        "purchase_price": 450,
+        "line_total": 2250
+      }
+    ],
+    "total_amount": 2250,
+    "paid_amount": 0,
+    "due_amount": 2250,
+    "payment_mode": "CREDIT",
+    "notes": "",
+    "status": "DUE",
+    "createdAt": "2026-04-07T12:07:11.356Z"
+  }
+]
