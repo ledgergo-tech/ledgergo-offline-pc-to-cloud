@@ -176,10 +176,15 @@ async function api(path, opts = {}) {
     else if (path.endsWith('/update') || path.endsWith('/save') || method === 'PUT') {
       const id = body.id || path.split('/').pop();
       if (table === 'settings') {
-         // Settings usually don't have an ID sent, they are tied to user_id
-         const { data, error } = await getSB().from(table).update(body).eq('user_id', user.id).select();
+         // Upsert settings tied to user_id
+         const cleanBody = { ...body };
+         delete cleanBody.id;
+         delete cleanBody.created_at;
+         const { data, error } = await getSB().from(table)
+           .upsert({ ...cleanBody, user_id: user.id }, { onConflict: 'user_id' })
+           .select();
          if (error) throw error;
-         return data?.[0] || { success: true };
+         return { message: 'Settings saved', success: true, ...(data?.[0] || {}) };
       }
       
       if (!id) throw new Error("ID required for update");
@@ -5052,15 +5057,18 @@ function renderSettings() {
         method: "POST", 
         body: JSON.stringify(formToJSON(e.target)) 
       });
-      if (result.message) { 
-        showToast("Settings updated successfully", "success"); 
-        await loadAll(); 
+      if (result && (result.message || result.success)) { 
+        showToast("Settings updated successfully ✅", "success"); 
+        state.dataLoaded = false;
+        await loadAll();
+        state.dataLoaded = true;
         updateHeaderBusinessInfo();
         startHeaderClock();
         renderSettings(); 
+      } else {
+        showToast("Failed to save settings: " + (result?.error || 'Unknown error'), "error");
       }
-      else showToast("Failed to save settings", "error");
-    } catch (err) { showToast("Error connecting to local server", "error"); }
+    } catch (err) { showToast("Error: " + err.message, "error"); }
   });
 
   document.getElementById("settings-smart-import-file")?.addEventListener("change", function () {
