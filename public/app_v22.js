@@ -39,16 +39,29 @@ function toggleAuthForm(formName) {
   if(formName === 'signup') document.getElementById('login-form').style.display = 'none';
 }
 
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session) {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('app-shell').style.display = 'flex';
-    loadAll(); // Load data once logged in
-  } else {
-    document.getElementById('auth-overlay').style.display = 'flex';
-    document.getElementById('app-shell').style.display = 'none';
+function initAuthListener() {
+  const sb = getSB();
+  if (!sb) {
+    // _sb not ready yet, retry after 100ms
+    setTimeout(initAuthListener, 100);
+    return;
   }
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session) {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('app-shell').style.display = 'flex';
+      navigateTo('dashboard');
+    } else {
+      document.getElementById('auth-overlay').style.display = 'flex';
+      document.getElementById('app-shell').style.display = 'none';
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAuthListener();
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
@@ -59,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await getSB().auth.signInWithPassword({ email, password });
       if (error) alert(error.message);
     });
   }
@@ -72,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const bName = document.getElementById('business-name').value;
       const bPhone = document.getElementById('business-phone').value;
 
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await getSB().auth.signUp({ email, password });
       if (error) {
         alert(error.message);
         return;
@@ -94,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Logout Helper
 window.logout = async () => {
-  await supabase.auth.signOut();
+  await getSB().auth.signOut();
 };
 
 async function api(path, opts = {}) {
