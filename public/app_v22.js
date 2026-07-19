@@ -230,6 +230,10 @@ async function loadAll() {
       if (!data) return;
       if (key === "payIn") state.paymentsIn = Array.isArray(data) ? data : [];
       else if (key === "payOut") state.paymentsOut = Array.isArray(data) ? data : [];
+      else if (key === "settings") {
+        // Settings comes as array from Supabase, take first row
+        state.settings = Array.isArray(data) ? (data[0] || {}) : (typeof data === 'object' ? data : {});
+      }
       else if (Array.isArray(data) || (typeof data === 'object' && data !== null)) {
         state[key] = data;
       }
