@@ -25,11 +25,139 @@ function formToJSON(form) {
   return obj;
 }
 
+// Use shared Supabase client initialized in index.html
+// Wait for it to be ready; it is set as window._sb
+function getSB() { return window._sb; }
+
+
+// Auth UI Logic
+function toggleAuthForm(formName) {
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.getElementById(formName + '-form').classList.add('active');
+  document.getElementById(formName + '-form').style.display = 'block';
+  if(formName === 'login') document.getElementById('signup-form').style.display = 'none';
+  if(formName === 'signup') document.getElementById('login-form').style.display = 'none';
+}
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'flex';
+    loadAll(); // Load data once logged in
+  } else {
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('app-shell').style.display = 'none';
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+    });
+  }
+
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const bName = document.getElementById('business-name').value;
+      const bPhone = document.getElementById('business-phone').value;
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      
+      // Save business details to settings table if user created
+      if (data?.user) {
+         await getSB().from('settings').insert([{
+           user_id: data.user.id,
+           business_name: bName,
+           phone: bPhone
+         }]);
+         alert('Account created! You can now log in.');
+         toggleAuthForm('login');
+      }
+    });
+  }
+});
+
+// Logout Helper
+window.logout = async () => {
+  await supabase.auth.signOut();
+};
+
 async function api(path, opts = {}) {
   try {
-    const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
-    return r.json();
-  } catch (e) { showToast("Unable to connect to server", "error"); return {}; }
+    const { data: { user } } = await getSB().auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const method = opts.method || 'GET';
+    const body = opts.body ? JSON.parse(opts.body) : null;
+    let table = '';
+
+    // Route path to table
+    if (path.includes('/customers')) table = 'customers';
+    else if (path.includes('/products')) table = 'products';
+    else if (path.includes('/invoices')) table = 'invoices';
+    else if (path.includes('/purchases')) table = 'purchases';
+    else if (path.includes('/expenses')) table = 'expenses';
+    else if (path.includes('/bank')) table = 'banks';
+    else if (path.includes('/settings')) table = 'settings';
+    else if (path.includes('/payments/list/IN')) table = 'payments_in';
+    else if (path.includes('/payments/list/OUT')) table = 'payments_out';
+    else return {}; // Default empty for unsupported routes
+
+    if (method === 'GET') {
+      const { data, error } = await getSB().from(table).select('*').eq('user_id', user.id);
+      if (error) throw error;
+      return data || [];
+    } 
+    
+    // For POST/PUT/DELETE, check the path suffix
+    if (path.endsWith('/create') || (method === 'POST' && !path.includes('/update') && !path.includes('/delete') && !path.includes('/save'))) {
+      const { data, error } = await getSB().from(table).insert([{ ...body, user_id: user.id }]).select();
+      if (error) throw error;
+      return data?.[0] || { success: true };
+    }
+    else if (path.endsWith('/update') || path.endsWith('/save') || method === 'PUT') {
+      const id = body.id || path.split('/').pop();
+      if (table === 'settings') {
+         // Settings usually don't have an ID sent, they are tied to user_id
+         const { data, error } = await getSB().from(table).update(body).eq('user_id', user.id).select();
+         if (error) throw error;
+         return data?.[0] || { success: true };
+      }
+      
+      if (!id) throw new Error("ID required for update");
+      const { data, error } = await getSB().from(table).update(body).eq('id', id).eq('user_id', user.id).select();
+      if (error) throw error;
+      return data?.[0] || { success: true };
+    }
+    else if (path.endsWith('/delete') || method === 'DELETE') {
+      const id = body.id || path.split('/').pop();
+      if (!id) throw new Error("ID required for delete");
+      const { error } = await getSB().from(table).delete().eq('id', id).eq('user_id', user.id);
+      if (error) throw error;
+      return { success: true };
+    }
+    
+    return { success: true };
+  } catch (e) {
+    console.error("Supabase API Error:", e);
+    if (typeof showToast === 'function') showToast("Database Error: " + e.message, "error");
+    return method === 'GET' ? [] : { success: false, error: e.message };
+  }
 }
 
 async function loadAll() {
@@ -345,37 +473,49 @@ function confirmDelete(msg, cb) {
   if (modalEl) modalEl.style.display = "flex";
   if (btnEl) btnEl.onclick = () => { closeConfirmModal(); cb(); };
 }
-function closeConfirmModal() { document.getElementById("confirm-modal").style.display = "none"; }
+function closeConfirmModal() {
+  const modal = document.getElementById("confirm-modal");
+  if (modal) modal.style.display = "none";
+}
 
-function closePm() { document.getElementById("premium-modal").style.display = "none"; }
+function closePm() {
+  const modal = document.getElementById("premium-modal");
+  if (modal) modal.style.display = "none";
+}
 function closePrintModal() { closePm(); }
 function openPm({ title, size = 'lg', sidebar = '', content = '', onSave, footer = '' }) {
   const modal = document.getElementById("premium-modal");
   if (!modal) return;
   const box = modal.querySelector(".premium-modal-box");
-  box.className = `modal-box premium-modal-box modal-${size}`;
-  document.getElementById("pm-title").textContent = title;
+  const titleEl = document.getElementById("pm-title");
   const sidebarEl = document.getElementById("pm-sidebar");
+  const mainContentEl = document.getElementById("pm-content-main");
+  const rawContentEl = document.getElementById("pm-content-raw");
+  const footerEl = document.getElementById("pm-footer");
+  if (!box || !titleEl || !sidebarEl || !mainContentEl || !rawContentEl || !footerEl) {
+    console.warn("openPm aborted: premium modal structure is incomplete.");
+    return;
+  }
+  box.className = `modal-box premium-modal-box modal-${size}`;
+  titleEl.textContent = title;
   if (sidebar) {
     sidebarEl.innerHTML = sidebar;
     sidebarEl.style.display = "flex";
   } else {
     sidebarEl.style.display = "none";
   }
-  const isRaw = !sidebar && content.includes("<table") || content.includes("<div class=\"ledger");
+  const isRaw = (!sidebar && content.includes("<table")) || content.includes("<div class=\"ledger");
   
   if (isRaw) {
-    document.getElementById("pm-content-main").style.display = "none";
-    const rawEl = document.getElementById("pm-content-raw");
-    rawEl.innerHTML = content;
-    rawEl.style.display = "block";
+    mainContentEl.style.display = "none";
+    rawContentEl.innerHTML = content;
+    rawContentEl.style.display = "block";
   } else {
-    document.getElementById("pm-content-raw").style.display = "none";
-    document.getElementById("pm-content-main").innerHTML = content;
-    document.getElementById("pm-content-main").style.display = "block";
+    rawContentEl.style.display = "none";
+    mainContentEl.innerHTML = content;
+    mainContentEl.style.display = "block";
   }
   
-  const footerEl = document.getElementById("pm-footer");
   if (footer) {
     footerEl.innerHTML = footer;
   } else {
@@ -386,10 +526,10 @@ function openPm({ title, size = 'lg', sidebar = '', content = '', onSave, footer
       </div>
     `;
     const saveBtn = document.getElementById("pm-save-btn");
-    if (onSave) {
+    if (saveBtn && onSave) {
       saveBtn.style.display = "block";
       saveBtn.onclick = onSave;
-    } else {
+    } else if (saveBtn) {
       saveBtn.style.display = "none";
     }
   }
@@ -682,7 +822,10 @@ function showInvoicePrint(invoice) {
   const businessContact = [businessPhone, businessEmail].filter(Boolean).join("  |  ");
   const customerContact = [customerMobile, customerGstin ? `GSTIN: ${customerGstin}` : ""].filter(Boolean).join("  |  ");
 
-  document.getElementById("print-content").innerHTML = `
+  document.getElementById("pm-content-main").style.display = "none";
+  const rawContent = document.getElementById("pm-content-raw");
+  rawContent.style.display = "block";
+  rawContent.innerHTML = `
     <div class="invoice-print-sheet">
       <div class="invoice-print-topbar invoice-print-topbar-sales">
         <div class="invoice-print-brand-card">
@@ -779,8 +922,10 @@ function showInvoicePrint(invoice) {
     </div>`;
 
   modal.style.display = "flex";
-  document.querySelector("#premium-modal .modal-title").textContent = `Invoice Preview: ${invoiceNumber}`;
-  document.querySelector("#premium-modal .modal-footer").innerHTML = `
+  const modalTitle = document.querySelector("#premium-modal .modal-title");
+  if (modalTitle) modalTitle.textContent = `Invoice Preview: ${invoiceNumber}`;
+  const modalFooter = document.querySelector("#premium-modal .modal-footer");
+  if (modalFooter) modalFooter.innerHTML = `
     <button class="btn btn-accent" onclick="shareInvoiceById(${invoice.id})">Send PDF on WhatsApp</button>
     <button class="btn btn-primary" onclick="openPrintDialog('Invoice PDF')">Print / Save PDF</button>
     <button class="btn btn-outline" onclick="closePrintModal()">Close</button>`;
@@ -1436,6 +1581,7 @@ function showAddParty(existing) {
   `;
 
   const content = `
+    <form id="cust-modal-form">
     ${isEdit ? `<input type="hidden" name="id" value="${p.id}">` : ""}
     <div id="pm-content-basic" class="tab-content active">
       <div class="form-group">
@@ -1509,6 +1655,7 @@ function showAddParty(existing) {
         <textarea name="address" rows="4" placeholder="Street, City, Pincode" class="input-premium">${p ? p.address : ""}</textarea>
       </div>
     </div>
+    </form>
   `;
 
   openPm({
@@ -1543,6 +1690,10 @@ function showEditParty(id) {
 
 async function submitAddParty(isEdit) {
   const f = document.getElementById("cust-modal-form");
+  if (!f) {
+    console.warn("Form #cust-modal-form not found in DOM");
+    return;
+  }
   if (!f.checkValidity()) { f.reportValidity(); return; }
   const fd = new FormData(f);
   const body = Object.fromEntries(fd);
@@ -2227,8 +2378,11 @@ function showBarcodeQuickAdd() {
   const title = modal.querySelector(".modal-title");
   if (title) title.textContent = "Barcode Quick Add";
 
-  const content = document.getElementById("print-content");
-  if (content) content.innerHTML = `
+  const content = document.getElementById("pm-content-raw");
+  if (content) {
+    document.getElementById("pm-content-main").style.display = "none";
+    content.style.display = "block";
+    content.innerHTML = `
     <form id="barcode-quick-form" class="form-grid">
       <div class="card" style="margin:0; box-shadow:none; border:1px solid var(--border);">
         <div class="card-title">Scan Or Enter Barcode</div>
@@ -2248,11 +2402,12 @@ function showBarcodeQuickAdd() {
       </div>
     </form>
   `;
+  }
 
   const footer = modal.querySelector(".modal-footer");
   if (footer) footer.innerHTML = `
     <button class="btn btn-primary" onclick="submitBarcodeQuickAdd()">Save Item</button>
-    <button class="btn btn-outline" onclick="closePrintModal()">Cancel</button>`;
+    <button class="btn btn-outline" onclick="closePm()">Cancel</button>`;
 
   const barcodeInput = document.getElementById("quick-barcode-input");
   if (barcodeInput) barcodeInput.focus();
@@ -2332,8 +2487,11 @@ function showBulkImportModal() {
   const title = modal.querySelector(".modal-title");
   if (title) title.textContent = "Bulk Import Items";
 
-  const content = document.getElementById("print-content");
-  if (content) content.innerHTML = `
+  const content = document.getElementById("pm-content-raw");
+  if (content) {
+    document.getElementById("pm-content-main").style.display = "none";
+    content.style.display = "block";
+    content.innerHTML = `
     <div class="card" style="margin:0; box-shadow:none; border:1px solid var(--border);">
       <div class="card-title">Import CSV Or JSON</div>
       <div class="text-secondary" style="font-size:13px; margin-bottom:12px;">Supported columns: name, item_code, barcode, category, stock, price, purchase_price, wholesale_price, tax, unit, hsn_code, sku</div>
@@ -2348,6 +2506,7 @@ function showBulkImportModal() {
       <div id="bulk-import-preview" class="text-secondary" style="font-size:12px; margin-top:10px;">Paste ya file upload ke baad import chala sakte ho.</div>
     </div>
   `;
+  }
 
   const footer = modal.querySelector(".modal-footer");
   if (footer) footer.innerHTML = `
@@ -2528,6 +2687,7 @@ function showAddProduct(prod) {
   const autoBarcode = !isEdit ? Math.floor(1000000000 + Math.random() * 9000000000).toString() : "";
 
   const content = `
+    <form id="pm-form">
     ${isEdit ? `<input type="hidden" name="id" value="${prod.id}">` : ""}
     
     <div id="pm-content-basic" class="tab-content active">
@@ -2612,6 +2772,7 @@ function showAddProduct(prod) {
         </select>
       </div>
     </div>
+    </form>
   `;
 
   openPm({
@@ -2632,8 +2793,16 @@ function selectItemType(el, type) {
 function showCategoryManager() {
   const modal = document.getElementById("premium-modal");
   if (!modal) return;
+  const titleEl = document.getElementById("pm-title");
+  const mainContentEl = document.getElementById("pm-content-main");
+  const rawContent = document.getElementById("pm-content-raw");
+  const footerEl = document.getElementById("pm-footer");
+  if (!titleEl || !mainContentEl || !rawContent || !footerEl) {
+    console.warn("showCategoryManager aborted: premium modal nodes missing.");
+    return;
+  }
   modal.style.display = "flex";
-  document.getElementById("premium-modal-title").textContent = "All Categories Master";
+  titleEl.textContent = "All Categories Master";
   
   const productCats = [...new Set(state.products.map(p => p.category).filter(Boolean))];
   const settingsCats = Array.isArray(state.settings.categories) ? state.settings.categories : [];
@@ -2649,7 +2818,9 @@ function showCategoryManager() {
     </div>
   `).join("") || '<div class="py-40 text-center text-muted">No categories saved yet. Try adding one below.</div>';
 
-  document.getElementById("print-content").innerHTML = `
+  mainContentEl.style.display = "none";
+  rawContent.style.display = "block";
+  rawContent.innerHTML = `
     <div class="card" style="box-shadow:none; border:1px solid var(--border); margin:0 0 20px 0; background:var(--bg-main);">
       <label class="form-group-label">Save New Category Master</label>
       <div class="input-group" style="margin-top:8px;">
@@ -2664,7 +2835,7 @@ function showCategoryManager() {
       ${rows}
     </div>
   `;
-  document.getElementById("premium-modal-footer").innerHTML = `<button class="btn btn-outline" onclick="closePrintModal()">Close Manager</button>`;
+  footerEl.innerHTML = `<button class="btn btn-outline" onclick="closePm()">Close Manager</button>`;
 }
 
 async function addCategoryToMaster() {
@@ -2747,9 +2918,13 @@ function showEditProduct(id) {
 
 async function submitProduct(isEdit, stayOpen) {
   const f = document.getElementById("pm-form");
+  if (!f) {
+    console.warn("Form #pm-form not found in DOM");
+    return;
+  }
   if (!f.checkValidity()) { 
     // If invalid, switch to basic tab where most required fields are
-    switchItemTab('basic');
+    switchPmTab('basic');
     f.reportValidity(); 
     return; 
   }
@@ -2834,6 +3009,7 @@ function showAddBank() {
     size: "md",
     content: `
   
+    <form id="pm-form">
       <div class="form-group">
         <label class="form-group-label">Bank Name *</label>
         <input name="bank_name" required placeholder="e.g. HDFC Bank" class="input-premium" />
@@ -2853,6 +3029,7 @@ function showAddBank() {
           <input name="current_balance" type="number" step="any" value="0" class="input-premium" />
         </div>
       </div>
+    </form>
     `,
     onSave: () => submitAddBank()
   });
@@ -2860,6 +3037,10 @@ function showAddBank() {
 
 async function submitAddBank() {
   const f = document.getElementById("pm-form");
+  if (!f) {
+    console.warn("Form #pm-form not found in DOM");
+    return;
+  }
   if (!f.checkValidity()) { f.reportValidity(); return; }
   const result = await api("/api/bank/create", { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(f))) });
   if (result.id) { showToast("Bank account added successfully!", "success"); closePrintModal(); await navigateTo("bank"); }
@@ -3961,7 +4142,11 @@ function renderExpenses() {
     e.preventDefault();
     const result = await api("/api/expenses/create", { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
     if (result.expense) { showToast("Expense added successfully!", "success"); await navigateTo("expenses"); }
-    else document.getElementById("exp-message").innerHTML = `<div class="alert alert-danger">${result.message || "Error"}</div>`;
+    else {
+      const expMessage = document.getElementById("exp-message");
+      if (expMessage) expMessage.innerHTML = `<div class="alert alert-danger">${result.message || "Error"}</div>`;
+      else showToast(result.message || "Error", "error");
+    }
   });
 }
 
@@ -3999,7 +4184,10 @@ function showPurchasePrint(p) {
       <td class="num">${money(i.line_total || 0).replace(s.currency || "Rs", "").trim()}</td>
     </tr>`).join("") || `<tr><td colspan="6" class="invoice-print-empty">No purchase items available.</td></tr>`;
 
-  document.getElementById("print-content").innerHTML = `
+  document.getElementById("pm-content-main").style.display = "none";
+  const rawContent = document.getElementById("pm-content-raw");
+  rawContent.style.display = "block";
+  rawContent.innerHTML = `
     <div class="invoice-print-sheet purchase-print-sheet">
       <div class="invoice-print-topbar invoice-print-topbar-purchase">
         <div class="invoice-print-buyer-card invoice-print-supplier-card">
@@ -4092,15 +4280,26 @@ function showPurchasePrint(p) {
         </div>
       </div>
     </div>`;
-  document.getElementById("premium-modal").style.display = "flex";
-  document.querySelector("#premium-modal .modal-title").textContent = "Purchase Voucher: PUR-" + p.id;
-  document.querySelector("#premium-modal .modal-footer").innerHTML = `<button class="btn btn-primary" onclick="openPrintDialog('Purchase PDF')">Print / Save PDF</button><button class="btn btn-outline" onclick="closePrintModal()">Close</button>`;
+  const modal = document.getElementById("premium-modal");
+  if (modal) modal.style.display = "flex";
+  const modalTitle = document.querySelector("#premium-modal .modal-title");
+  if (modalTitle) modalTitle.textContent = "Purchase Voucher: PUR-" + p.id;
+  const modalFooter = document.querySelector("#premium-modal .modal-footer");
+  if (modalFooter) modalFooter.innerHTML = `<button class="btn btn-primary" onclick="openPrintDialog('Purchase PDF')">Print / Save PDF</button><button class="btn btn-outline" onclick="closePrintModal()">Close</button>`;
 }
 
 function showExpensePrint(e) {
   if (!e) return;
   const s = state.settings;
-  document.getElementById("print-content").innerHTML = `
+  const mainContentEl = document.getElementById("pm-content-main");
+  const rawContent = document.getElementById("pm-content-raw");
+  if (!mainContentEl || !rawContent) {
+    console.warn("showExpensePrint aborted: premium modal body nodes missing.");
+    return;
+  }
+  mainContentEl.style.display = "none";
+  rawContent.style.display = "block";
+  rawContent.innerHTML = `
     <div class="voucher-box">
       <div class="voucher-header">
         <div class="voucher-title">Payment Voucher</div>
@@ -4122,9 +4321,12 @@ function showExpensePrint(e) {
         <div style="border-top:1px solid #111;width:150px;text-align:center;padding-top:5px">Receiver Sign</div>
       </div>
     </div>`;
-  document.getElementById("premium-modal").style.display = "flex";
-  document.querySelector("#premium-modal .modal-title").textContent = "Expense Voucher: EXP-" + e.id;
-  document.querySelector("#premium-modal .modal-footer").innerHTML = `<button class="btn btn-primary" onclick="window.print()">🖨️ Print Voucher</button><button class="btn btn-outline" onclick="closePrintModal()">Close</button>`;
+  const modal = document.getElementById("premium-modal");
+  if (modal) modal.style.display = "flex";
+  const modalTitle = document.querySelector("#premium-modal .modal-title");
+  if (modalTitle) modalTitle.textContent = "Expense Voucher: EXP-" + e.id;
+  const modalFooter = document.querySelector("#premium-modal .modal-footer");
+  if (modalFooter) modalFooter.innerHTML = `<button class="btn btn-primary" onclick="window.print()">🖨️ Print Voucher</button><button class="btn btn-outline" onclick="closePrintModal()">Close</button>`;
 }
 
 /* ========== REPORTS ========== */
@@ -5299,3 +5501,4 @@ function showExpiringSoonModal() {
 function closeExpiringModal() {
   document.getElementById('expiring-modal').style.display = 'none';
 }
+

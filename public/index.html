@@ -5,17 +5,138 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LEDGERGO - Smart Accounting Solutions</title>
   <meta name="description" content="Offline billing software for small businesses. Manage sales, purchases, customers, inventory and reports without internet." />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
-  <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2" />
-  <link rel="apple-touch-icon" href="/favicon.png?v=2" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2" />
+  <link rel="shortcut icon" type="image/png" href="favicon.png?v=2" />
+  <link rel="apple-touch-icon" href="favicon.png?v=2" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ===== AUTH OVERLAY - DARK THEME ===== */
+    .auth-wrapper {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: linear-gradient(135deg, #0a0c10 0%, #0f1218 50%, #0d1117 100%);
+      display: flex; justify-content: center; align-items: center; z-index: 99999;
+    }
+    .auth-box {
+      background: #161b22;
+      padding: 2.5rem 2.2rem;
+      border-radius: 16px;
+      width: 100%; max-width: 440px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.15);
+      border: 1px solid #30363d;
+    }
+    .auth-brand {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 1.8rem;
+    }
+    .auth-brand-text {
+      font-size: 22px; font-weight: 800; letter-spacing: 1px;
+      color: #ffffff !important;
+    }
+    .auth-brand-text span { color: #10b981; }
+    .auth-title {
+      text-align: center; margin-bottom: 1.5rem;
+      color: #e6edf3; font-size: 1.3rem; font-weight: 700;
+    }
+    .auth-form { display: none; }
+    .auth-label {
+      display: block; color: #8b949e; font-size: 0.82rem;
+      font-weight: 500; margin-top: 0.9rem; margin-bottom: 0.3rem;
+    }
+    .auth-input {
+      width: 100%; padding: 0.72rem 1rem;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 8px; outline: none;
+      font-size: 0.95rem; box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .auth-input::placeholder { color: #484f58; }
+    .auth-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .auth-btn {
+      width: 100%; padding: 0.8rem;
+      margin-top: 1.3rem;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+    .auth-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .auth-btn:active { transform: translateY(0); }
+    .auth-switch {
+      text-align: center; margin-top: 1.1rem;
+      font-size: 0.875rem; color: #8b949e;
+    }
+    .auth-switch span {
+      color: #8b5cf6; cursor: pointer; font-weight: 600;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .auth-switch span:hover { color: #a78bfa; }
+    .auth-divider {
+      margin: 1.3rem 0; border: 0;
+      border-top: 1px solid #21262d;
+    }
+    .auth-section-title {
+      color: #8b5cf6; font-size: 0.88rem;
+      font-weight: 600; margin: 0.5rem 0 0;
+    }
+  </style>
 </head>
 <body>
-  <div class="app-shell">
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" class="auth-wrapper">
+    <div class="auth-box">
+      <div class="auth-brand">
+        <svg width="38" height="38" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="48" fill="#10b981"/>
+          <rect x="25" y="55" width="8" height="15" rx="4" fill="white"/>
+          <rect x="38" y="45" width="8" height="25" rx="4" fill="white"/>
+          <rect x="51" y="35" width="8" height="35" rx="4" fill="white"/>
+          <rect x="64" y="25" width="8" height="45" rx="4" fill="white"/>
+        </svg>
+        <div class="auth-brand-text">LEDGER<span>GO</span></div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" style="display:block;">
+        <h2 class="auth-title">Login to Your Account</h2>
+        <label class="auth-label">Email Address</label>
+        <input type="email" id="login-email" class="auth-input" required placeholder="Enter your email" />
+        <label class="auth-label">Password</label>
+        <input type="password" id="login-password" class="auth-input" required placeholder="Enter your password" />
+        <button type="submit" class="auth-btn" id="login-btn">Login</button>
+        <p class="auth-switch">New user? <span onclick="toggleAuthForm('signup')">Create an account</span></p>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signup-form" style="display:none;">
+        <h2 class="auth-title">Create New Account</h2>
+        <label class="auth-label">Email Address</label>
+        <input type="email" id="signup-email" class="auth-input" required placeholder="Enter your email" />
+        <label class="auth-label">Password</label>
+        <input type="password" id="signup-password" class="auth-input" required placeholder="Create a password (min 6 chars)" />
+        <hr class="auth-divider" />
+        <p class="auth-section-title">📋 Business Details</p>
+        <label class="auth-label">Owner Name *</label>
+        <input type="text" id="owner-name" class="auth-input" required placeholder="Your Full Name" />
+        <label class="auth-label">Business Name *</label>
+        <input type="text" id="business-name" class="auth-input" required placeholder="Your Shop / Business Name" />
+        <label class="auth-label">Phone Number</label>
+        <input type="tel" id="business-phone" class="auth-input" placeholder="Contact Number" />
+        <label class="auth-label">GST Number (Optional)</label>
+        <input type="text" id="business-gst" class="auth-input" placeholder="e.g. 22AAAAA0000A1Z5" style="text-transform:uppercase;" />
+        <button type="submit" class="auth-btn" id="signup-btn">Register &amp; Setup Business</button>
+        <p class="auth-switch">Already have an account? <span onclick="toggleAuthForm('login')">Login here</span></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-shell" id="app-shell" style="display: none;">
     <!-- Top Header -->
     <header class="top-header">
       <!-- Top Row: Utilities -->
@@ -39,6 +160,10 @@
             <div class="brand-sub" style="font-size: 9px; opacity: 0.8; letter-spacing: 0.2px;">Smart Accounting Solutions</div>
           </div>
         </div>
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle" type="button" aria-controls="top-nav-main" aria-expanded="false">
+          <span class="mobile-nav-toggle-icon" aria-hidden="true"></span>
+          Menu
+        </button>
 
         <div class="topbar-search">
           <div class="search-bar">
@@ -74,12 +199,25 @@
               </div>
             </div>
            <div id="topbar-title" style="display:none;"></div>
-           <div class="user-avatar" style="background: var(--accent);">S</div>
+           <div class="user-menu-wrap" style="position:relative;">
+             <div class="user-avatar" id="user-avatar-btn" style="background: var(--accent); cursor:pointer;" onclick="event.stopPropagation(); toggleUserMenu()" title="Account">S</div>
+             <div id="user-dropdown" onclick="event.stopPropagation()" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:#1e2330; border:1px solid #2a2e37; border-radius:10px; min-width:180px; box-shadow:0 8px 30px rgba(0,0,0,0.5); z-index:9999; overflow:hidden;">
+               <div style="padding:12px 16px; border-bottom:1px solid #2a2e37;">
+                 <div id="dropdown-email" style="font-size:0.78rem; color:#94a3b8; word-break:break-all;"></div>
+               </div>
+               <button onclick="navigateTo('settings'); toggleUserMenu();" style="width:100%; padding:10px 16px; background:none; border:none; color:#e2e8f0; text-align:left; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                 ⚙️ Settings
+               </button>
+               <button onclick="logout()" style="width:100%; padding:10px 16px; background:none; border:none; color:#f87171; text-align:left; cursor:pointer; font-size:0.9rem; font-weight:600; display:flex; align-items:center; gap:8px; border-top:1px solid #2a2e37;">
+                 🚪 Logout
+               </button>
+             </div>
+           </div>
         </div>
       </div>
 
       <!-- Bottom Row: Navigation -->
-      <nav class="top-nav">
+      <nav class="top-nav" id="top-nav-main">
         <div class="nav-item">
           <button class="nav-link menu-btn active" data-page="dashboard" id="nav-dashboard">Dashboard</button>
         </div>
@@ -276,12 +414,95 @@
 
   <!-- Glassmorphic Status Bar -->
   <div class="glass-status-bar">
-    <div class="stat-item"><span class="pulse">🟢</span> Offline Mode</div>
+    <div class="stat-item"><span class="pulse">🟢</span> Cloud Mode</div>
     <div class="stat-divider"></div>
     <div class="stat-item">v1.0.22 LIVE</div>
   </div>
 
-  <script src="/app_v22.js"></script>
+  <script>
+    // Auth Logic - runs after Supabase CDN is loaded
+    (function initAuth() {
+      const SUPABASE_URL = 'https://grdpgphdoxngjygentdk.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyZHBncGhkb3huZ2p5Z2VudGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODE0MjksImV4cCI6MjA5OTk1NzQyOX0.8_6naC041KpupOxH59BkDY6n4Xne7dAmH4IAf15kUSc';
+      window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      window.toggleAuthForm = function(form) {
+        document.getElementById('login-form').style.display = form === 'login' ? 'block' : 'none';
+        document.getElementById('signup-form').style.display = form === 'signup' ? 'block' : 'none';
+      };
+
+      window._sb.auth.onAuthStateChange((event, session) => {
+        if (session) {
+          document.getElementById('auth-overlay').style.display = 'none';
+          document.getElementById('app-shell').style.display = 'flex';
+          // Show user email in dropdown
+          const email = session.user.email || '';
+          const emailEl = document.getElementById('dropdown-email');
+          if (emailEl) emailEl.textContent = email;
+          const avatarEl = document.getElementById('user-avatar-btn');
+          if (avatarEl) avatarEl.textContent = email.charAt(0).toUpperCase();
+          if (typeof loadAll === 'function') {
+            loadAll().then(() => {
+              if (typeof navigateTo === 'function') navigateTo('dashboard');
+            });
+          }
+        } else {
+          document.getElementById('auth-overlay').style.display = 'flex';
+          document.getElementById('app-shell').style.display = 'none';
+        }
+      });
+
+      document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const btn = document.getElementById('login-btn');
+        btn.textContent = 'Logging in...';
+        const { error } = await window._sb.auth.signInWithPassword({ email, password });
+        btn.textContent = 'Login';
+        if (error) alert('Error: ' + error.message);
+      });
+
+      document.getElementById('signup-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const bName = document.getElementById('business-name').value.trim();
+        const ownerName = document.getElementById('owner-name').value.trim();
+        const bPhone = document.getElementById('business-phone').value.trim();
+        const bGst = document.getElementById('business-gst').value.trim().toUpperCase();
+        const btn = document.getElementById('signup-btn');
+        btn.textContent = 'Creating account...';
+        const { data, error } = await window._sb.auth.signUp({ email, password });
+        btn.textContent = 'Register & Setup Business';
+        if (error) { alert('Error: ' + error.message); return; }
+        if (data?.user) {
+          await window._sb.from('settings').insert([{ user_id: data.user.id, owner_name: ownerName, business_name: bName, phone: bPhone, gstin: bGst }]);
+          alert('Account created successfully! Please login now.');
+          toggleAuthForm('login');
+        }
+      });
+    })();
+
+    window.logout = async function() {
+      await window._sb.auth.signOut();
+      document.getElementById('user-dropdown').style.display = 'none';
+    };
+
+    window.toggleUserMenu = function() {
+      const dd = document.getElementById('user-dropdown');
+      dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.user-menu-wrap')) {
+        const dd = document.getElementById('user-dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
+  </script>
+  <script src="app_v22.js"></script>
 </body>
 </html>
 
