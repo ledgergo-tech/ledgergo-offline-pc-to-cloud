@@ -1333,6 +1333,49 @@ window.onclick = function(event) {
   }
 }
 
+/* ========== DASHBOARD PRODUCT SEARCH ========== */
+window.dashProductSearch = function(query) {
+  const el = document.getElementById('dash-product-results');
+  if (!el) return;
+  const q = (query || '').trim().toLowerCase();
+  if (!q) {
+    el.innerHTML = '<div class="text-secondary text-center" style="font-size:11px; padding:12px 0;">Type to search products...</div>';
+    return;
+  }
+  const products = state.products || [];
+  const results = products.filter(p =>
+    p && (
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.sku || '').toLowerCase().includes(q) ||
+      (p.barcode || '').toLowerCase().includes(q) ||
+      (p.item_code || '').toLowerCase().includes(q)
+    )
+  ).slice(0, 8);
+
+  if (!results.length) {
+    el.innerHTML = '<div class="text-secondary text-center" style="font-size:11px; padding:12px 0;">No products found.</div>';
+    return;
+  }
+
+  el.innerHTML = results.map(p => {
+    const stock = Number(p.stock || 0);
+    const lowLimit = Number(p.low_stock_alert || p.low_stock_limit || 5);
+    const stockColor = stock <= 0 ? 'var(--danger)' : stock <= lowLimit ? '#f59e0b' : 'var(--success)';
+    const stockLabel = stock <= 0 ? 'Out of Stock' : stock <= lowLimit ? 'Low Stock' : 'In Stock';
+    return `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); cursor:pointer;" onclick="navigateTo('products')">
+      <div>
+        <div style="font-weight:600; font-size:12px; color:var(--text);">${escapeHtml(p.name)}</div>
+        <div style="font-size:10px; color:var(--text-secondary);">SKU: ${p.sku || '-'} &nbsp;|&nbsp; Price: ${money(p.price)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px; font-weight:700; color:${stockColor};">${stockLabel}</div>
+        <div style="font-size:10px; color:var(--text-secondary);">Qty: ${stock} ${p.unit || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
 /* ========== DASHBOARD ========== */
 function renderDashboard() {
   const el = document.getElementById("page-dashboard");
@@ -1497,18 +1540,18 @@ function renderDashboard() {
 
         <div class="flex flex-col gap-24">
            <div class="card" style="padding: 24px;">
-              <div class="table-title mb-16" style="font-size: 13px;">Low Stock Alert</div>
-              <div class="flex flex-col gap-12">
-                 ${products.filter(p => p && Number(p.stock || 0) <= Number(p.low_stock_limit || p.low_stock_alert || 5)).slice(0, 5).map(p => {
-                   if (!p) return "";
-                   return `
-                   <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px; border-radius: var(--radius-md); background: var(--accent-surface); border: 1px solid var(--accent-soft);">
-                     <div>
-                       <div class="font-bold" style="font-size:12px;">${p.name}</div>
-                       <div class="text-secondary" style="font-size:10px;">Stock: ${p.stock || 0} ${p.unit || ''}</div>
-                     </div>
-                     <div class="badge badge-danger" style="font-size:10px;">REORDER</div>
-                   </div>`; }).join("") || '<div class="text-secondary text-center py-20" style="font-size:11px;">All items are well stocked ✅</div>'}
+              <div class="table-title mb-12" style="font-size: 13px;">🔍 Product Search</div>
+              <div style="position:relative; margin-bottom:12px;">
+                <input 
+                  id="dash-product-search" 
+                  type="text" 
+                  placeholder="Search product by name, SKU or barcode..." 
+                  oninput="dashProductSearch(this.value)"
+                  style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; outline:none; box-sizing:border-box;"
+                />
+              </div>
+              <div id="dash-product-results" class="flex flex-col gap-8">
+                <div class="text-secondary text-center" style="font-size:11px; padding:12px 0;">Type to search products...</div>
               </div>
            </div>
         </div>
