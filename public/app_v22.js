@@ -14,7 +14,9 @@ window.onunhandledrejection = function(event) {
 const state = { 
   customers: [], products: [], banks: [], invoices: [], 
   purchases: [], expenses: [], dashboard: {}, settings: {},
-  paymentsIn: [], paymentsOut: [], recentScans: []
+  paymentsIn: [], paymentsOut: [], recentScans: [],
+  currentPage: 'dashboard',
+  dataLoaded: false
 };
 
 // Helper for older browser compatibility
@@ -39,19 +41,47 @@ function toggleAuthForm(formName) {
   if(formName === 'signup') document.getElementById('login-form').style.display = 'none';
 }
 
+function showAppLoader(msg) {
+  let el = document.getElementById('app-loader');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-loader';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;color:#fff;font-size:18px;font-family:Outfit,sans-serif;gap:16px;';
+    el.innerHTML = '<div style="width:48px;height:48px;border:4px solid #ffffff44;border-top:4px solid #00c853;border-radius:50%;animation:spin 0.8s linear infinite"></div><span id="app-loader-msg">' + (msg||'Loading...') + '</span><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+    document.body.appendChild(el);
+  } else {
+    document.getElementById('app-loader-msg').textContent = msg || 'Loading...';
+    el.style.display = 'flex';
+  }
+}
+
+function hideAppLoader() {
+  const el = document.getElementById('app-loader');
+  if (el) el.style.display = 'none';
+}
+
 function initAuthListener() {
   const sb = getSB();
   if (!sb) {
-    // _sb not ready yet, retry after 100ms
     setTimeout(initAuthListener, 100);
     return;
   }
-  sb.auth.onAuthStateChange((event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
     if (session) {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('app-shell').style.display = 'flex';
-      navigateTo('dashboard');
+      if (!state.dataLoaded) {
+        showAppLoader('Loading your data...');
+        await loadAll();
+        state.dataLoaded = true;
+        hideAppLoader();
+      }
+      renderAll();
+      updateHeaderBusinessInfo();
+      startHeaderClock();
+      activatePage('dashboard');
     } else {
+      state.dataLoaded = false;
       document.getElementById('auth-overlay').style.display = 'flex';
       document.getElementById('app-shell').style.display = 'none';
     }
@@ -982,7 +1012,6 @@ function activatePage(name) {
 
 async function navigateTo(page) {
   state.currentPage = page;
-  await loadAll();
   updateHeaderBusinessInfo();
   startHeaderClock();
   renderAll();
