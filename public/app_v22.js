@@ -1501,20 +1501,6 @@ function renderDashboard() {
                </div>
                <div class="action-card-bg-icon">📦</div>
             </div>
-            <div class="action-card" style="background: #0f766e;" onclick="showAddCustomer()">
-               <div class="action-card-content">
-                 <div class="action-card-title">🧑🏻‍💼 New Party / Customer</div>
-                 <div class="action-card-subtitle">Add customer or debtor party</div>
-               </div>
-               <div class="action-card-bg-icon">👥</div>
-            </div>
-            <div class="action-card" style="background: #7c3aed;" onclick="showAddSupplier()">
-               <div class="action-card-content">
-                 <div class="action-card-title">🏭 New Supplier</div>
-                 <div class="action-card-subtitle">Add vendor or supplier party</div>
-               </div>
-               <div class="action-card-bg-icon">🏭</div>
-            </div>
             <div class="action-card" style="background: #ea580c;" onclick="navigateTo('products')">
                <div class="action-card-content">
                  <div class="action-card-title">🔍 Product Search</div>
