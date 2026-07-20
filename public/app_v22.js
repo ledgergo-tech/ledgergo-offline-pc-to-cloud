@@ -1500,7 +1500,7 @@ function renderDashboard() {
 
       <div class="grid-2" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
         <div class="flex flex-col gap-24">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom:16px;">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom:16px;">
             <div class="action-card" style="background: var(--accent);" onclick="navigateTo('sales')">
                <div class="action-card-content">
                  <div class="action-card-title">🚀 Create Sales Invoice</div>
