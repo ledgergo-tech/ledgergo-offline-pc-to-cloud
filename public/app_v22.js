@@ -1503,7 +1503,7 @@ function renderDashboard() {
             </div>
             <div class="action-card" style="background: #0f766e;" onclick="showAddCustomer()">
                <div class="action-card-content">
-                 <div class="action-card-title">👤 New Party / Customer</div>
+                 <div class="action-card-title">🧑🏻‍💼 New Party / Customer</div>
                  <div class="action-card-subtitle">Add customer or debtor party</div>
                </div>
                <div class="action-card-bg-icon">👥</div>
@@ -1515,20 +1515,12 @@ function renderDashboard() {
                </div>
                <div class="action-card-bg-icon">🏭</div>
             </div>
-          </div>
-
-          <!-- Product Search Full Width -->
-          <div class="card" style="padding:20px; margin-bottom:16px;">
-            <div class="table-title mb-12" style="font-size:13px;">🔍 Product Search</div>
-            <input 
-              id="dash-product-search" 
-              type="text" 
-              placeholder="Search product by name, SKU or barcode..." 
-              oninput="dashProductSearch(this.value)"
-              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; outline:none; box-sizing:border-box; margin-bottom:10px;"
-            />
-            <div id="dash-product-results" class="flex flex-col gap-8">
-              <div class="text-secondary text-center" style="font-size:11px; padding:8px 0;">Type to search products...</div>
+            <div class="action-card" style="background: #ea580c;" onclick="navigateTo('products')">
+               <div class="action-card-content">
+                 <div class="action-card-title">🔍 Product Search</div>
+                 <div class="action-card-subtitle">View and search all inventory items</div>
+               </div>
+               <div class="action-card-bg-icon">🔍</div>
             </div>
           </div>
 
