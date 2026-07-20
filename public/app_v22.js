@@ -1486,7 +1486,7 @@ function renderDashboard() {
 
       <div class="grid-2" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
         <div class="flex flex-col gap-24">
-          <div class="grid-2" style="gap: 16px;">
+      <div class="grid-2" style="gap: 16px; margin-bottom:16px;">
             <div class="action-card" style="background: var(--accent);" onclick="navigateTo('sales')">
                <div class="action-card-content">
                  <div class="action-card-title">🚀 Create Sales Invoice</div>
@@ -1500,6 +1500,35 @@ function renderDashboard() {
                  <div class="action-card-subtitle">Update your inventory levels</div>
                </div>
                <div class="action-card-bg-icon">📦</div>
+            </div>
+            <div class="action-card" style="background: #0f766e;" onclick="showAddCustomer()">
+               <div class="action-card-content">
+                 <div class="action-card-title">👤 New Party / Customer</div>
+                 <div class="action-card-subtitle">Add customer or debtor party</div>
+               </div>
+               <div class="action-card-bg-icon">👥</div>
+            </div>
+            <div class="action-card" style="background: #7c3aed;" onclick="showAddSupplier()">
+               <div class="action-card-content">
+                 <div class="action-card-title">🏭 New Supplier</div>
+                 <div class="action-card-subtitle">Add vendor or supplier party</div>
+               </div>
+               <div class="action-card-bg-icon">🏭</div>
+            </div>
+          </div>
+
+          <!-- Product Search Full Width -->
+          <div class="card" style="padding:20px; margin-bottom:16px;">
+            <div class="table-title mb-12" style="font-size:13px;">🔍 Product Search</div>
+            <input 
+              id="dash-product-search" 
+              type="text" 
+              placeholder="Search product by name, SKU or barcode..." 
+              oninput="dashProductSearch(this.value)"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; outline:none; box-sizing:border-box; margin-bottom:10px;"
+            />
+            <div id="dash-product-results" class="flex flex-col gap-8">
+              <div class="text-secondary text-center" style="font-size:11px; padding:8px 0;">Type to search products...</div>
             </div>
           </div>
 
@@ -1654,6 +1683,25 @@ function renderParties() {
       </div>
     </div>`;
 }
+
+// Shortcut: open add party form from dashboard (Customer)
+window.showAddCustomer = function() {
+  navigateTo('customers');
+  setTimeout(() => showAddParty(), 200);
+};
+
+// Shortcut: open add supplier form from dashboard
+window.showAddSupplier = function() {
+  navigateTo('customers');
+  setTimeout(() => {
+    const p = showAddParty();
+    // Pre-select supplier type in the form
+    setTimeout(() => {
+      const typeEl = document.querySelector('[name="type"]');
+      if (typeEl) { typeEl.value = 'supplier'; typeEl.dispatchEvent(new Event('change')); }
+    }, 300);
+  }, 200);
+};
 
 function showAddParty(existing) {
   const p = existing || null;
