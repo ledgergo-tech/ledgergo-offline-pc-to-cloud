@@ -1515,27 +1515,26 @@ function renderDashboard() {
                </div>
                <div class="action-card-bg-icon">📦</div>
             </div>
-            <div class="action-card" style="background: #ea580c; overflow: visible; cursor: default;">
+            <div class="action-card" style="background: #ea580c; cursor: default;">
                <div class="action-card-content" style="width:100%;">
-                 <div class="action-card-title" style="margin-bottom:8px;">🔍 Product Search</div>
-                 <div style="position:relative;">
-                   <input 
-                      id="dash-product-search" 
-                      type="text" 
-                      placeholder="Search name, SKU..." 
-                      oninput="dashProductSearch(this.value)"
-                      onclick="dashProductSearch(this.value)"
-                      style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; outline:none;"
-                    />
-                    <style>
-                      #dash-product-search::placeholder { color: rgba(255,255,255,0.7); }
-                    </style>
-                   <div id="dash-product-results" style="position:absolute; top:calc(100% + 4px); left:0; width:100%; background:var(--surface); border:1px solid var(--border); box-shadow:0 10px 25px rgba(0,0,0,0.2); border-radius:8px; z-index:99; max-height:250px; overflow-y:auto; display:none;">
-                   </div>
-                 </div>
+                 <div class="action-card-title" style="margin-bottom:6px; font-size:15px;">🔍 Product Search</div>
+                 <input 
+                    id="dash-product-search" 
+                    type="text" 
+                    placeholder="Type name, SKU to search..." 
+                    oninput="dashProductSearch(this.value)"
+                    onclick="dashProductSearch(this.value)"
+                    style="width:90%; padding:6px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.4); background:rgba(0,0,0,0.15); color:#fff; font-size:11px; outline:none;"
+                  />
+                  <style>
+                    #dash-product-search::placeholder { color: rgba(255,255,255,0.7); }
+                  </style>
                </div>
                <div class="action-card-bg-icon">🔍</div>
             </div>
+          </div>
+          
+          <div id="dash-product-results" style="display:none; background:var(--surface); border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.1); border-radius:8px; margin-bottom:16px; max-height:300px; overflow-y:auto;">
           </div>
 
           <div class="table-wrap">
