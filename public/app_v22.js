@@ -1517,18 +1517,17 @@ function renderDashboard() {
             </div>
             <div class="action-card" style="background: #ea580c; cursor: default;">
                <div class="action-card-content" style="width:100%;">
-                 <div class="action-card-title" style="margin-bottom:6px; font-size:15px;">🔍 Product Search</div>
-                 <input 
-                    id="dash-product-search" 
-                    type="text" 
-                    placeholder="Type name, SKU to search..." 
-                    oninput="dashProductSearch(this.value)"
-                    onclick="dashProductSearch(this.value)"
-                    style="width:90%; padding:6px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.4); background:rgba(0,0,0,0.15); color:#fff; font-size:11px; outline:none;"
-                  />
-                  <style>
-                    #dash-product-search::placeholder { color: rgba(255,255,255,0.7); }
-                  </style>
+                 <div class="action-card-title">🔍 Product Search</div>
+                 <div class="action-card-subtitle" style="opacity: 1;">
+                   <input 
+                      id="dash-product-search" 
+                      type="text" 
+                      placeholder="Type name, SKU to search..." 
+                      oninput="dashProductSearch(this.value)"
+                      onclick="dashProductSearch(this.value)"
+                      style="width:90%; padding:4px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.4); background:rgba(0,0,0,0.15); color:#fff; font-size:11px; outline:none; height:22px; box-sizing:border-box;"
+                    />
+                 </div>
                </div>
                <div class="action-card-bg-icon">🔍</div>
             </div>
