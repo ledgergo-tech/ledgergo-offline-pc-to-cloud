@@ -1344,9 +1344,14 @@ window.dashProductSearch = function(query) {
   if (!el) return;
   const q = (query || '').trim().toLowerCase();
   if (!q) {
-    el.innerHTML = '<div class="text-secondary text-center" style="font-size:11px; padding:12px 0;">Type to search products...</div>';
+    el.style.display = 'none';
+    el.innerHTML = '';
     return;
   }
+  
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
+  
   const products = state.products || [];
   const results = products.filter(p =>
     p && (
@@ -1368,7 +1373,7 @@ window.dashProductSearch = function(query) {
     const stockColor = stock <= 0 ? 'var(--danger)' : stock <= lowLimit ? '#f59e0b' : 'var(--success)';
     const stockLabel = stock <= 0 ? 'Out of Stock' : stock <= lowLimit ? 'Low Stock' : 'In Stock';
     return `
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); cursor:pointer;" onclick="navigateTo('products')">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer;" onclick="navigateTo('products')">
       <div>
         <div style="font-weight:600; font-size:12px; color:var(--text);">${escapeHtml(p.name)}</div>
         <div style="font-size:10px; color:var(--text-secondary);">SKU: ${p.sku || '-'} &nbsp;|&nbsp; Price: ${money(p.price)}</div>
@@ -1380,6 +1385,15 @@ window.dashProductSearch = function(query) {
     </div>`;
   }).join('');
 };
+
+// Close dashboard search dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const el = document.getElementById('dash-product-results');
+  const input = document.getElementById('dash-product-search');
+  if (el && input && !el.contains(e.target) && e.target !== input) {
+    el.style.display = 'none';
+  }
+});
 
 /* ========== DASHBOARD ========== */
 function renderDashboard() {
@@ -1486,7 +1500,7 @@ function renderDashboard() {
 
       <div class="grid-2" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
         <div class="flex flex-col gap-24">
-      <div class="grid-2" style="gap: 16px; margin-bottom:16px;">
+      <div class="grid-3" style="gap: 16px; margin-bottom:16px;">
             <div class="action-card" style="background: var(--accent);" onclick="navigateTo('sales')">
                <div class="action-card-content">
                  <div class="action-card-title">🚀 Create Sales Invoice</div>
@@ -1501,10 +1515,24 @@ function renderDashboard() {
                </div>
                <div class="action-card-bg-icon">📦</div>
             </div>
-            <div class="action-card" style="background: #ea580c;" onclick="navigateTo('products')">
-               <div class="action-card-content">
-                 <div class="action-card-title">🔍 Product Search</div>
-                 <div class="action-card-subtitle">View and search all inventory items</div>
+            <div class="action-card" style="background: #ea580c; overflow: visible; cursor: default;">
+               <div class="action-card-content" style="width:100%;">
+                 <div class="action-card-title" style="margin-bottom:8px;">🔍 Product Search</div>
+                 <div style="position:relative;">
+                   <input 
+                      id="dash-product-search" 
+                      type="text" 
+                      placeholder="Search name, SKU..." 
+                      oninput="dashProductSearch(this.value)"
+                      onclick="dashProductSearch(this.value)"
+                      style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; font-size:12px; outline:none;"
+                    />
+                    <style>
+                      #dash-product-search::placeholder { color: rgba(255,255,255,0.7); }
+                    </style>
+                   <div id="dash-product-results" style="position:absolute; top:calc(100% + 4px); left:0; width:100%; background:var(--surface); border:1px solid var(--border); box-shadow:0 10px 25px rgba(0,0,0,0.2); border-radius:8px; z-index:99; max-height:250px; overflow-y:auto; display:none;">
+                   </div>
+                 </div>
                </div>
                <div class="action-card-bg-icon">🔍</div>
             </div>

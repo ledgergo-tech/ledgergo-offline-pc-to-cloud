@@ -278,6 +278,19 @@
             <button class="menu-btn" data-page="settings" id="nav-settings">Business Settings</button>
           </div>
         </div>
+
+        <!-- Quick Add Buttons -->
+        <div class="nav-item dropdown-hover" style="margin-left: 8px;">
+          <button class="nav-link" style="background: var(--accent); color:#fff; border-radius:6px; padding:6px 14px; font-weight:600;">+ New</button>
+          <div class="nav-dropdown-menu right-align">
+            <button class="menu-btn" onclick="navigateTo('customers'); setTimeout(()=>{ const b=document.getElementById('add-party-btn'); if(b) b.click(); },300);">👤 New Party</button>
+            <button class="menu-btn" onclick="navigateTo('customers'); setTimeout(()=>{ const b=document.getElementById('add-supplier-btn')||document.querySelector('[data-party-type=supplier]'); if(b) b.click(); },300);">🏭 New Supplier</button>
+            <button class="menu-btn" onclick="navigateTo('products'); setTimeout(()=>{ const b=document.getElementById('add-product-btn'); if(b) b.click(); },300);">📦 New Item</button>
+            <button class="menu-btn" onclick="navigateTo('sales'); setTimeout(()=>{ const b=document.getElementById('add-invoice-btn'); if(b) b.click(); },300);">🧾 New Sale Invoice</button>
+            <button class="menu-btn" onclick="navigateTo('purchase'); setTimeout(()=>{ const b=document.getElementById('add-purchase-btn'); if(b) b.click(); },300);">📥 New Purchase</button>
+            <button class="menu-btn" onclick="navigateTo('expenses'); setTimeout(()=>{ const b=document.getElementById('add-expense-btn'); if(b) b.click(); },300);">💸 New Expense</button>
+          </div>
+        </div>
       </nav>
     </header>
 
