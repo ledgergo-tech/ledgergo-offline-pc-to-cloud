@@ -1551,21 +1551,6 @@ function renderDashboard() {
         </div>
 
         <div class="flex flex-col gap-24">
-           <div class="card" style="padding: 24px;">
-              <div class="table-title mb-12" style="font-size: 13px;">🔍 Product Search</div>
-              <div style="position:relative; margin-bottom:12px;">
-                <input 
-                  id="dash-product-search" 
-                  type="text" 
-                  placeholder="Search product by name, SKU or barcode..." 
-                  oninput="dashProductSearch(this.value)"
-                  style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; outline:none; box-sizing:border-box;"
-                />
-              </div>
-              <div id="dash-product-results" class="flex flex-col gap-8">
-                <div class="text-secondary text-center" style="font-size:11px; padding:12px 0;">Type to search products...</div>
-              </div>
-           </div>
         </div>
       </div>`;
   } catch (err) {
